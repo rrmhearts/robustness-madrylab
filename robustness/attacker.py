@@ -57,7 +57,7 @@ class Attacker(ch.nn.Module):
     However, the :meth:`robustness.Attacker.forward` function below
     documents the arguments supported for adversarial attacks specifically.
     """
-    def __init__(self, model, dataset):
+    def __init__(self, model, dataset, device = "gpu"):
         """
         Initialize the Attacker
 
@@ -68,6 +68,7 @@ class Attacker(ch.nn.Module):
         super(Attacker, self).__init__()
         self.normalize = helpers.InputNormalize(dataset.mean, dataset.std)
         self.model = model
+        self.device = device
 
     def forward(self, x, target, *_, constraint, eps, step_size, iterations,
                 random_start=False, random_restarts=False, do_tqdm=False,
@@ -136,7 +137,8 @@ class Attacker(ch.nn.Module):
         # Can provide a different input to make the feasible set around
         # instead of the initial point
         if orig_input is None: orig_input = x.detach()
-        orig_input = orig_input.cuda()
+        if self.device == "gpu" and ch.cuda.is_available():
+            orig_input = orig_input.cuda()
 
         # Multiplier for gradient ascent [untargeted] or descent [targeted]
         m = -1 if targeted else 1
@@ -268,11 +270,12 @@ class AttackerModel(ch.nn.Module):
     For a more comprehensive overview of this class, see 
     :doc:`our detailed walkthrough <../example_usage/input_space_manipulation>`.
     """
-    def __init__(self, model, dataset):
+    def __init__(self, model, dataset, device="gpu"):
         super(AttackerModel, self).__init__()
         self.normalizer = helpers.InputNormalize(dataset.mean, dataset.std)
         self.model = model
-        self.attacker = Attacker(model, dataset)
+        self.attacker = Attacker(model, dataset, device)
+        self.device = device
 
     def forward(self, inp, target=None, make_adv=False, with_latent=False,
                 fake_relu=False, no_relu=False, with_image=True, **attacker_kwargs):

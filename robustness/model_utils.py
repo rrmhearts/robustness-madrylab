@@ -51,7 +51,7 @@ class DummyModel(nn.Module):
         return self.model(x)
 
 def make_and_restore_model(*_, arch, dataset, resume_path=None,
-         parallel=False, pytorch_pretrained=False, add_custom_forward=False):
+         parallel=False, pytorch_pretrained=False, add_custom_forward=False, device="gpu"):
     """
     Makes a model and (optionally) restores it from a checkpoint.
 
@@ -84,13 +84,16 @@ def make_and_restore_model(*_, arch, dataset, resume_path=None,
     classifier_model = dataset.get_model(arch, pytorch_pretrained) if \
                             isinstance(arch, str) else arch
 
-    model = AttackerModel(classifier_model, dataset)
+    model = AttackerModel(classifier_model, dataset, device)
 
     # optionally resume from a checkpoint
     checkpoint = None
     if resume_path and os.path.isfile(resume_path):
         print("=> loading checkpoint '{}'".format(resume_path))
-        checkpoint = ch.load(resume_path, pickle_module=dill)
+        if device == "gpu" and ch.cuda.is_available():
+            checkpoint = ch.load(resume_path, pickle_module=dill)
+        else:
+            checkpoint = ch.load(resume_path, pickle_module=dill, map_location=ch.device('cpu'))
         
         # Makes us able to load models saved with legacy versions
         state_dict_path = 'model'
@@ -107,7 +110,8 @@ def make_and_restore_model(*_, arch, dataset, resume_path=None,
 
     if parallel:
         model = ch.nn.DataParallel(model)
-    model = model.cuda()
+    if device == "gpu" and ch.cuda.is_available():
+        model = model.cuda()
 
     return model, checkpoint
 
