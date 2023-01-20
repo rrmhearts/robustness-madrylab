@@ -51,7 +51,8 @@ class DummyModel(nn.Module):
         return self.model(x)
 
 def make_and_restore_model(*_, arch, dataset, resume_path=None,
-         parallel=False, pytorch_pretrained=False, add_custom_forward=False, device="gpu"):
+         parallel=False, pytorch_pretrained=False, add_custom_forward=False,
+         device="gpu" if ch.cuda.is_available() else "cpu"):
     """
     Makes a model and (optionally) restores it from a checkpoint.
 

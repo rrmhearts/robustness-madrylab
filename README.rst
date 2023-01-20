@@ -4,6 +4,8 @@ Install via ``pip``: ``pip install robustness``
 
 Read the docs: https://robustness.readthedocs.io/en/latest/index.html
 
+``Note: Training and some functions require GPU. See apex package.``
+
 ``robustness`` is a package we (students in the `MadryLab <http://madry-lab.ml>`_) created
 to make training, evaluating, and exploring neural networks flexible and easy.
 We use it in almost all of our projects (whether they involve
